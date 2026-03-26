@@ -61,7 +61,9 @@ struct VarsityHomeView: View {
                         HStack(spacing: 12) {
                             // ALL button
                             Button(action: {
-                                selectedSchoolId = nil
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                                    selectedSchoolId = nil
+                                }
                             }) {
                                 VStack {
                                     RoundedRectangle(cornerRadius: 16)
@@ -74,16 +76,29 @@ struct VarsityHomeView: View {
                                                 .foregroundColor(.white)
                                         )
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .stroke(selectedSchoolId == nil ? Color.white : Color.clear, lineWidth: 2)
+                                            ZStack {
+                                                let isSelected = (selectedSchoolId == nil)
+                                                let lw = isSelected ? CGFloat(2) : CGFloat(0)
+                                                
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .strokeBorder(Color.white, lineWidth: lw)
+                                                
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .inset(by: lw)
+                                                    .strokeBorder(Color(hex: "17171B"), lineWidth: lw)
+                                            }
+                                            .animation(.spring(response: 0.28, dampingFraction: 0.8), value: selectedSchoolId == nil)
                                         )
                                 }
                             }
+                            .buttonStyle(.plain)
                             
                             // School buttons (representing teams for now)
                             ForEach(schoolsViewModel.schools) { school in
                                 Button(action: {
-                                    selectedSchoolId = school.id
+                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                                        selectedSchoolId = school.id
+                                    }
                                 }) {
                                     VStack {
                                         RoundedRectangle(cornerRadius: 16)
@@ -102,11 +117,22 @@ struct VarsityHomeView: View {
                                                 }
                                             )
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(selectedSchoolId == school.id ? Color.white : Color.clear, lineWidth: 2)
+                                                ZStack {
+                                                    let isSelected = (selectedSchoolId == school.id)
+                                                    let lw = isSelected ? CGFloat(2) : CGFloat(0)
+                                                    
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .strokeBorder(Color.white, lineWidth: lw)
+                                                    
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .inset(by: lw)
+                                                        .strokeBorder(Color(hex: "17171B"), lineWidth: lw)
+                                                }
+                                                .animation(.spring(response: 0.28, dampingFraction: 0.8), value: selectedSchoolId == school.id)
                                             )
                                     }
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 20)
