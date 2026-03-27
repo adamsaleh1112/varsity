@@ -1,4 +1,4 @@
-# Varsity ⛹️‍♂️
+### Varsity ⛹️‍♂️
 
 Varsity is a simple iOS app for discovering **high school sports** and quickly finding what’s coming next.
 
