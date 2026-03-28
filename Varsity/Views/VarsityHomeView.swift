@@ -91,7 +91,7 @@ struct VarsityHomeView: View {
                                         )
                                 }
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(NoEffectButtonStyle())
                             
                             // School buttons (representing teams for now)
                             ForEach(schoolsViewModel.schools) { school in
@@ -132,7 +132,7 @@ struct VarsityHomeView: View {
                                             )
                                     }
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(NoEffectButtonStyle())
                             }
                         }
                         .padding(.horizontal, 20)
@@ -366,6 +366,12 @@ extension Color {
             blue:  Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+struct NoEffectButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
 
