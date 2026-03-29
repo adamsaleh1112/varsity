@@ -1,55 +1,56 @@
 import Foundation
 import AuthenticationServices
 import Combine
+import Supabase
 
 @MainActor
 final class AuthenticationManager: ObservableObject {
     @Published var isAuthenticated = false
-    @Published var currentUser: MockUser?
+    @Published var currentUser: User?
     @Published var isLoading = false
     @Published var errorMessage: String?
     
+    private let supabase = SupabaseManager.shared.client
+
     init() {
         checkAuthenticationStatus()
     }
-    
+
     func checkAuthenticationStatus() {
-        // For development, start unauthenticated
-        isAuthenticated = false
+        Task {
+            do {
+                let session = try await supabase.auth.session
+                await loadCurrentUser()
+                isAuthenticated = currentUser != nil
+            } catch {
+                isAuthenticated = false
+                currentUser = nil
+            }
+        }
     }
     
-    func signInWithApple() async {
-        isLoading = true
-        errorMessage = nil
-        
-        // Simulate Apple Sign-In for development (no delay)
-        await createMockAppleUser()
-        isLoading = false
-    }
-    
-    private func createMockAppleUser() async {
-        // Mock Apple Sign-In for development
-        let mockUser = MockUser(
-            id: UUID(),
-            email: "user@icloud.com",
-            displayName: "Apple User",
-            avatarURL: nil,
-            authProvider: "apple",
-            createdAt: ISO8601DateFormatter().string(from: Date()),
-            lastLogin: ISO8601DateFormatter().string(from: Date())
-        )
-        
-        currentUser = mockUser
-        isAuthenticated = true
-    }
-    
-    func signInWithEmail(email: String, password: String) async {
+    func signUpWithUsername(username: String, email: String, password: String) async {
         isLoading = true
         errorMessage = nil
         
         // Basic validation
-        guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Please enter both email and password"
+        guard !username.isEmpty, !email.isEmpty, !password.isEmpty else {
+            errorMessage = "Please enter username, email, and password"
+            isLoading = false
+            return
+        }
+        
+        guard username.count >= 4 else {
+            errorMessage = "Username must be at least 4 characters"
+            isLoading = false
+            return
+        }
+        
+        // Validate username format (alphanumeric, dots, dashes, underscores only)
+        let usernameRegex = "^[a-zA-Z0-9._-]+$"
+        let usernamePredicate = NSPredicate(format: "SELF MATCHES %@", usernameRegex)
+        guard usernamePredicate.evaluate(with: username) else {
+            errorMessage = "Username can only contain letters, numbers, dots, dashes, and underscores"
             isLoading = false
             return
         }
@@ -60,40 +61,138 @@ final class AuthenticationManager: ObservableObject {
             return
         }
         
-        // Mock email/password authentication for development
-        await createMockEmailUser(email: email)
+        guard password.count >= 6 else {
+            errorMessage = "Password must be at least 6 characters"
+            isLoading = false
+            return
+        }
+        
+        // Check if username already exists
+        do {
+            let existingUsers: [User] = try await supabase
+                .from("users")
+                .select()
+                .eq("username", value: username)
+                .execute()
+                .value
+            
+            if !existingUsers.isEmpty {
+                errorMessage = "Username already exists. Please choose a different one."
+                isLoading = false
+                return
+            }
+        } catch {
+            errorMessage = "Error checking username availability"
+            isLoading = false
+            return
+        }
+        
+        do {
+            // Sign up with Supabase Auth, passing username in metadata
+            let response = try await supabase.auth.signUp(
+                email: email, 
+                password: password,
+                data: ["username": .string(username)]
+            )
+            await loadCurrentUser()
+            isAuthenticated = currentUser != nil
+        } catch {
+            print("Signup error: \(error)")
+            if error.localizedDescription.contains("duplicate") || error.localizedDescription.contains("unique") {
+                errorMessage = "Username or email already exists"
+            } else {
+                errorMessage = "Database error saving new user"
+            }
+        }
+        
+        isLoading = false
+    }
+
+    func signInWithUsername(username: String, password: String) async {
+        isLoading = true
+        errorMessage = nil
+        
+        // Basic validation
+        guard !username.isEmpty, !password.isEmpty else {
+            errorMessage = "Please enter both username and password"
+            isLoading = false
+            return
+        }
+        
+        guard username.count >= 4 else {
+            errorMessage = "Username must be at least 4 characters"
+            isLoading = false
+            return
+        }
+        
+        // Find user by username to get their email
+        do {
+            let users: [User] = try await supabase
+                .from("users")
+                .select()
+                .eq("username", value: username)
+                .execute()
+                .value
+            
+            guard let user = users.first, let email = user.email else {
+                errorMessage = "Username not found"
+                isLoading = false
+                return
+            }
+            
+            // Sign in with email and password
+            let response = try await supabase.auth.signIn(email: email, password: password)
+            await loadCurrentUser()
+            isAuthenticated = currentUser != nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
         isLoading = false
     }
     
-    private func createMockEmailUser(email: String) async {
-        // Mock email/password sign-in for development
-        let mockUser = MockUser(
-            id: UUID(),
-            email: email,
-            displayName: email.components(separatedBy: "@").first?.capitalized ?? "User",
-            avatarURL: nil,
-            authProvider: "email",
-            createdAt: ISO8601DateFormatter().string(from: Date()),
-            lastLogin: ISO8601DateFormatter().string(from: Date())
-        )
+    func signInWithApple() async {
+        isLoading = true
+        errorMessage = nil
         
-        currentUser = mockUser
-        isAuthenticated = true
+        // TODO: Implement Apple Sign-In with Supabase
+        // For now, show message that it's not implemented yet
+        errorMessage = "Apple Sign-In coming soon. Please use email/password for now."
+        
+        isLoading = false
+    }
+    
+    private func loadCurrentUser() async {
+        do {
+            let session = try await supabase.auth.session
+            guard session.user != nil else { 
+                currentUser = nil
+                return 
+            }
+            let authUser = session.user
+            
+            // Fetch user profile from our users table
+            let users: [User] = try await supabase
+                .from("users")
+                .select()
+                .eq("id", value: authUser.id)
+                .execute()
+                .value
+            
+            currentUser = users.first
+        } catch {
+            print("Error loading user: \(error)")
+            currentUser = nil
+        }
     }
     
     func signOut() async {
-        currentUser = nil
-        isAuthenticated = false
+        do {
+            try await supabase.auth.signOut()
+            currentUser = nil
+            isAuthenticated = false
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
-}
-
-// Mock user model for development
-struct MockUser: Identifiable {
-    let id: UUID
-    let email: String?
-    let displayName: String?
-    let avatarURL: String?
-    let authProvider: String
-    let createdAt: String
-    let lastLogin: String?
 }

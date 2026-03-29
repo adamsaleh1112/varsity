@@ -1,28 +1,53 @@
 import Foundation
+import Supabase
 
 final class UserFollowService {
-    // Mock storage for development
-    private var mockFollows: Set<UUID> = []
+    private let supabase = SupabaseManager.shared.client
     
     func followSchool(userId: UUID, schoolId: UUID) async throws {
-        // Simulate network delay
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-        mockFollows.insert(schoolId)
+        let follow = UserFollow(
+            id: UUID(),
+            userId: userId,
+            schoolId: schoolId,
+            followedAt: ISO8601DateFormatter().string(from: Date()),
+            notificationsEnabled: true
+        )
+        
+        try await supabase
+            .from("user_follows")
+            .insert(follow)
+            .execute()
     }
     
     func unfollowSchool(userId: UUID, schoolId: UUID) async throws {
-        // Simulate network delay
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-        mockFollows.remove(schoolId)
+        try await supabase
+            .from("user_follows")
+            .delete()
+            .eq("user_id", value: userId)
+            .eq("school_id", value: schoolId)
+            .execute()
     }
     
     func getFollowedSchools(for userId: UUID) async throws -> [UUID] {
-        // Simulate network delay
-        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
-        return Array(mockFollows)
+        let follows: [UserFollow] = try await supabase
+            .from("user_follows")
+            .select()
+            .eq("user_id", value: userId)
+            .execute()
+            .value
+        
+        return follows.map { $0.schoolId }
     }
     
     func isFollowing(userId: UUID, schoolId: UUID) async throws -> Bool {
-        return mockFollows.contains(schoolId)
+        let follows: [UserFollow] = try await supabase
+            .from("user_follows")
+            .select()
+            .eq("user_id", value: userId)
+            .eq("school_id", value: schoolId)
+            .execute()
+            .value
+        
+        return !follows.isEmpty
     }
 }

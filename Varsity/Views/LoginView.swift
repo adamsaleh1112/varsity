@@ -2,9 +2,13 @@ import SwiftUI
 import AuthenticationServices
 
 struct LoginView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var authManager: SimpleAuthManager
+    @State private var username = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var isSignUpMode = false
+    @State private var showErrorAlert = false
+    @State private var isPasswordVisible = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -44,37 +48,79 @@ struct LoginView: View {
                         .frame(height: 80)
                         .padding(.bottom, 40)
                     
-                    // Email/Password Fields
+                    // Login Fields
                     VStack(spacing: 16) {
-                        // Email Field
-                        TextField("", text: $email, prompt: Text("Email").foregroundColor(.gray.opacity(0.6)))
+                        // Username Field
+                        TextField("", text: $username, prompt: Text("Username").foregroundColor(.gray.opacity(0.6)))
                             .padding()
                             .background(Color.clear)
                             .foregroundColor(.white)
-                            .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color(hex: "2b2b28"), lineWidth: 1)
+                                    .stroke(Color(hex: "28282B"), lineWidth: 1)
                             )
                             .frame(height: 50)
                         
-                        // Password Field
-                        SecureField("", text: $password, prompt: Text("Password").foregroundColor(.gray.opacity(0.6)))
-                            .padding()
-                            .background(Color.clear)
-                            .foregroundColor(.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color(hex: "2b2b28"), lineWidth: 1)
-                            )
-                            .frame(height: 50)
+                        // Email Field (only for sign up) - with smooth animation
+                        if isSignUpMode {
+                            TextField("", text: $email, prompt: Text("Email").foregroundColor(.gray.opacity(0.6)))
+                                .padding()
+                                .background(Color.clear)
+                                .foregroundColor(.white)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color(hex: "28282B"), lineWidth: 1)
+                                )
+                                .frame(height: 50)
+                                .opacity(isSignUpMode ? 1 : 0)
+                                .scaleEffect(isSignUpMode ? 1 : 0.8)
+                                .transition(.asymmetric(
+                                    insertion: .scale.combined(with: .opacity).animation(.easeInOut(duration: 0.3)),
+                                    removal: .scale.combined(with: .opacity).animation(.easeInOut(duration: 0.2))
+                                ))
+                        }
                         
-                        // Sign In Button
+                        // Password Field with Toggle
+                        ZStack(alignment: .trailing) {
+                            if isPasswordVisible {
+                                TextField("", text: $password, prompt: Text("Password").foregroundColor(.gray.opacity(0.6)))
+                                    .padding()
+                                    .padding(.trailing, 30)
+                            } else {
+                                SecureField("", text: $password, prompt: Text("Password").foregroundColor(.gray.opacity(0.6)))
+                                    .padding()
+                                    .padding(.trailing, 30)
+                            }
+                            
+                            Button(action: {
+                                isPasswordVisible.toggle()
+                            }) {
+                                Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.trailing, 12)
+                        }
+                        .background(Color.clear)
+                        .foregroundColor(.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color(hex: "28282B"), lineWidth: 1)
+                        )
+                        .frame(height: 50)
+                        
+                        // Sign In/Sign Up Button
                         Button(action: {
                             Task {
-                                await authManager.signInWithEmail(email: email, password: password)
+                                if isSignUpMode {
+                                    await authManager.signUpWithUsername(username: username, email: email, password: password)
+                                } else {
+                                    await authManager.signInWithUsername(username: username, password: password)
+                                }
                             }
                         }) {
                             HStack {
@@ -83,7 +129,7 @@ struct LoginView: View {
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                         .scaleEffect(0.8)
                                 }
-                                Text("Sign In")
+                                Text(isSignUpMode ? "Sign Up" : "Sign In")
                                     .foregroundColor(.white)
                                     .fontWeight(.medium)
                             }
@@ -93,8 +139,25 @@ struct LoginView: View {
                             .cornerRadius(20)
                         }
                         .disabled(authManager.isLoading)
+                        
+                        // Toggle Sign In/Sign Up Mode
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isSignUpMode.toggle()
+                            }
+                            authManager.errorMessage = nil
+                            // Clear fields when switching modes
+                            username = ""
+                            email = ""
+                            password = ""
+                        }) {
+                            Text(isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
+                                .foregroundColor(.gray)
+                                .font(.footnote)
+                        }
                     }
                     .padding(.horizontal, 40)
+                    .animation(.easeInOut(duration: 0.3), value: isSignUpMode)
                     
                     // Divider
                     HStack {
@@ -172,12 +235,18 @@ struct LoginView: View {
                 }
             }
         }
-        .alert("Authentication Error", isPresented: .constant(authManager.errorMessage != nil)) {
+        .alert("Authentication Error", isPresented: $showErrorAlert) {
             Button("OK") {
                 authManager.errorMessage = nil
+                showErrorAlert = false
             }
         } message: {
             Text(authManager.errorMessage ?? "")
+        }
+        .onChange(of: authManager.errorMessage) {
+            if authManager.errorMessage != nil {
+                showErrorAlert = true
+            }
         }
     }
 }

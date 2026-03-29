@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct VarsityMeView: View {
+    @EnvironmentObject var authManager: SimpleAuthManager
+    @State private var showingEditProfile = false
+    @State private var showingTeamSelection = false
+    
     var body: some View {
         NavigationView {
             GeometryReader { geometry in
@@ -52,16 +56,118 @@ struct VarsityMeView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 30)
                         
-                        Spacer()
-                        
-                        Text("Profile Coming Soon")
-                            .font(.title2)
-                            .foregroundColor(.gray)
-                        
-                        Spacer()
+                        // Profile Content
+                        ScrollView {
+                            VStack(spacing: 24) {
+                                // Profile Header
+                                VStack(spacing: 16) {
+                                    // Profile Picture
+                                    AsyncImage(url: URL(string: authManager.currentUser?.avatarUrl ?? "")) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .overlay(
+                                                Image(systemName: "person.fill")
+                                                    .font(.system(size: 40))
+                                                    .foregroundColor(.gray)
+                                            )
+                                    }
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                                    
+                                    // User Info
+                                    VStack(spacing: 8) {
+                                        Text(authManager.currentUser?.displayName ?? authManager.currentUser?.username ?? "User")
+                                            .font(.title2)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.white)
+                                        
+                                        Text("@\(authManager.currentUser?.username ?? "")")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                        
+                                        if let bio = authManager.currentUser?.bio, !bio.isEmpty {
+                                            Text(bio)
+                                                .font(.body)
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .multilineTextAlignment(.center)
+                                                .padding(.horizontal, 20)
+                                        }
+                                    }
+                                }
+                                .padding(.top, 20)
+                                
+                                // Action Buttons
+                                VStack(spacing: 12) {
+                                    // Side by side buttons
+                                    HStack(spacing: 12) {
+                                        // Edit Profile Button
+                                        Button(action: {
+                                            showingEditProfile = true
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "person.crop.circle")
+                                                Text("Edit Profile")
+                                            }
+                                            .foregroundColor(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 50)
+                                            .background(Color(hex: "6e27e8"))
+                                            .cornerRadius(12)
+                                        }
+                                        
+                                        // Manage Teams Button
+                                        Button(action: {
+                                            showingTeamSelection = true
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "graduationcap")
+                                                Text("Schools")
+                                            }
+                                            .foregroundColor(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 50)
+                                            .background(Color(hex: "28282B"))
+                                            .cornerRadius(12)
+                                        }
+                                    }
+                                    
+                                    // Sign Out Button
+                                    Button(action: {
+                                        Task {
+                                            await authManager.signOut()
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                            Text("Sign Out")
+                                        }
+                                        .foregroundColor(.red)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 50)
+                                        .background(Color.red.opacity(0.1))
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                                
+                                Spacer(minLength: 100)
+                            }
+                        }
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingEditProfile) {
+            EditProfileView()
+                .environmentObject(authManager)
+        }
+        .sheet(isPresented: $showingTeamSelection) {
+            TeamSelectionView()
+                .environmentObject(authManager)
         }
     }
 }

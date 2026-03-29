@@ -2,15 +2,16 @@ import Foundation
 
 struct User: Codable, Identifiable {
     let id: UUID
+    let username: String
     let email: String?
     let displayName: String?
     let avatarURL: String?
-    let authProvider: AuthProvider
+    let authProvider: String
     let createdAt: String
     let lastLogin: String?
     
     enum CodingKeys: String, CodingKey {
-        case id, email
+        case id, username, email
         case displayName = "display_name"
         case avatarURL = "avatar_url"
         case authProvider = "auth_provider"

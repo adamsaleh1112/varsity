@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AuthenticatedAppView: View {
-    @StateObject private var authManager = AuthenticationManager()
+    @StateObject private var authManager = SimpleAuthManager()
     
     var body: some View {
         Group {
@@ -14,13 +14,13 @@ struct AuthenticatedAppView: View {
             }
         }
         .onAppear {
-            authManager.checkAuthenticationStatus()
+            // SimpleAuthManager doesn't need checkAuthenticationStatus - it starts unauthenticated
         }
     }
 }
 
 struct MainAppView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var authManager: SimpleAuthManager
     
     var body: some View {
         TabView {
