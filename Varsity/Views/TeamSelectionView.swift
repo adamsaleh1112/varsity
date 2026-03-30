@@ -247,7 +247,7 @@ struct TeamRowView: View {
             .clipShape(Circle())
             
             // School Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 0) { // 0 spacing to push school name and location closer to eachother
                 Text(school.name)
                     .font(.headline)
                     .foregroundColor(.white)
