@@ -291,7 +291,7 @@ struct EditProfileView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color(hex: "6e27e8"))
-            .cornerRadius(12)
+            .cornerRadius(20)
         }
         .disabled(authManager.isLoading)
         .padding(.horizontal, 20)
