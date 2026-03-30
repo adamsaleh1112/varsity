@@ -1,8 +1,8 @@
 import Foundation
-import Combine
-import CryptoKit
 import Supabase
+import CryptoKit
 import UIKit
+import Combine
 
 @MainActor
 final class SimpleAuthManager: ObservableObject {
@@ -17,6 +17,14 @@ final class SimpleAuthManager: ObservableObject {
     init() {
         // Start unauthenticated - simple approach
         isAuthenticated = false
+    }
+    
+    private func hashPassword(_ password: String) -> String {
+        // Simple password hashing using SHA256
+        // In production, use a proper password hashing library like bcrypt
+        let data = Data(password.utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
     
     func signUpWithUsername(username: String, email: String, password: String) async {
@@ -162,6 +170,13 @@ final class SimpleAuthManager: ObservableObject {
         isLoading = false
     }
     
+    func signOut() {
+        currentUser = nil
+        isAuthenticated = false
+        userFollows = []
+        errorMessage = nil
+    }
+    
     func updateProfile(displayName: String?, bio: String?, avatarUrl: String?, bannerUrl: String?) async {
         guard let currentUser = currentUser else {
             errorMessage = "No user logged in"
@@ -262,12 +277,24 @@ final class SimpleAuthManager: ObservableObject {
             let filename = "\(currentUser.username).jpg"
             let filePath = "banners/\(filename)"
             
+            // First, delete existing banner to ensure clean slate
+            print("Deleting existing banner at path: \(filePath)")
+            do {
+                try await supabase.storage
+                    .from("user-assets")
+                    .remove(paths: [filePath])
+                print("Existing banner deleted successfully")
+            } catch {
+                print("No existing banner to delete or delete failed: \(error)")
+                // Continue even if delete fails (file might not exist)
+            }
+            
             print("Uploading banner to path: \(filePath)")
             
-            // Upload to Supabase Storage with upsert (overwrites existing)
+            // Upload to Supabase Storage
             try await supabase.storage
                 .from("user-assets")
-                .upload(filePath, data: processedData, options: FileOptions(upsert: true))
+                .upload(filePath, data: processedData)
             
             print("Banner upload successful")
             
@@ -371,6 +398,22 @@ final class SimpleAuthManager: ObservableObject {
                 .remove(paths: [filePath])
             
             print("Avatar deleted successfully")
+            
+            // Update local user object to reflect deletion
+            let defaultAvatarUrl = "https://hpfxonowaopgclnujptn.supabase.co/storage/v1/object/public/user-assets/avatars/defaultuserpic.jpg"
+            self.currentUser = SimpleUser(
+                id: currentUser.id,
+                username: currentUser.username,
+                email: currentUser.email,
+                passwordHash: currentUser.passwordHash,
+                displayName: currentUser.displayName,
+                bio: currentUser.bio,
+                avatarUrl: defaultAvatarUrl,
+                bannerUrl: currentUser.bannerUrl,
+                createdAt: currentUser.createdAt,
+                updatedAt: currentUser.updatedAt
+            )
+            
         } catch {
             print("Avatar delete error: \(error)")
         }
@@ -393,56 +436,117 @@ final class SimpleAuthManager: ObservableObject {
                 .remove(paths: [filePath])
             
             print("Banner deleted successfully")
+            
+            // Update local user object to reflect deletion
+            let defaultBannerUrl = "https://hpfxonowaopgclnujptn.supabase.co/storage/v1/object/public/user-assets/banners/defaultuserpic.jpg"
+            self.currentUser = SimpleUser(
+                id: currentUser.id,
+                username: currentUser.username,
+                email: currentUser.email,
+                passwordHash: currentUser.passwordHash,
+                displayName: currentUser.displayName,
+                bio: currentUser.bio,
+                avatarUrl: currentUser.avatarUrl,
+                bannerUrl: defaultBannerUrl,
+                createdAt: currentUser.createdAt,
+                updatedAt: currentUser.updatedAt
+            )
+            
         } catch {
             print("Banner delete error: \(error)")
         }
     }
     
     func loadUserFollows() async {
-        guard let currentUser = currentUser else { return }
+        guard let currentUser = currentUser else { 
+            print("No current user found when loading follows")
+            return 
+        }
+        
+        print("Loading follows for user: \(currentUser.id)")
         
         do {
-            // Fetch follows with school data using join
             let response = try await supabase
-                .from("user_follows")
-                .select("""
-                    id,
-                    user_id,
-                    school_id,
-                    followed_at,
-                    notifications_enabled,
-                    schools:school_id (
-                        id,
-                        name,
-                        short_name,
-                        city,
-                        state,
-                        mascot,
-                        primary_color,
-                        secondary_color,
-                        logo_path
-                    )
-                """)
+                .from("simple_user_follows")
+                .select("*, schools(*)")
                 .eq("user_id", value: currentUser.id)
                 .execute()
             
+            print("Raw response data: \(String(data: response.data, encoding: .utf8) ?? "nil")")
+            
             let follows = try JSONDecoder().decode([UserFollowWithSchool].self, from: response.data)
-            userFollows = follows
+            
+            print("Decoded follows count: \(follows.count)")
+            for follow in follows {
+                print("Follow: \(follow.schoolId), School: \(follow.school?.name ?? "nil")")
+            }
+            
+            await MainActor.run {
+                self.userFollows = follows
+                print("Updated userFollows array with \(follows.count) items")
+            }
         } catch {
             print("Error loading user follows: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to load followed schools"
+            }
         }
     }
     
-    func signOut() async {
-        currentUser = nil
-        isAuthenticated = false
+    func followSchool(_ schoolId: UUID) async -> Bool {
+        guard let currentUser = currentUser else { return false }
+        
+        do {
+            let follow = SimpleUserFollowInsert(
+                userId: currentUser.id,
+                schoolId: schoolId,
+                notificationsEnabled: true
+            )
+            
+            try await supabase
+                .from("simple_user_follows")
+                .insert(follow)
+                .execute()
+            
+            // Reload follows to update UI
+            await loadUserFollows()
+            return true
+        } catch {
+            print("Error following school: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to follow school"
+            }
+            return false
+        }
     }
     
-    private func hashPassword(_ password: String) -> String {
-        let inputData = Data(password.utf8)
-        let hashed = SHA256.hash(data: inputData)
-        return hashed.compactMap { String(format: "%02x", $0) }.joined()
+    func unfollowSchool(_ schoolId: UUID) async -> Bool {
+        guard let currentUser = currentUser else { return false }
+        
+        do {
+            try await supabase
+                .from("simple_user_follows")
+                .delete()
+                .eq("user_id", value: currentUser.id)
+                .eq("school_id", value: schoolId)
+                .execute()
+            
+            // Reload follows to update UI
+            await loadUserFollows()
+            return true
+        } catch {
+            print("Error unfollowing school: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to unfollow school"
+            }
+            return false
+        }
     }
+    
+    func isFollowingSchool(_ schoolId: UUID) -> Bool {
+        return userFollows.contains { $0.schoolId == schoolId }
+    }
+    
 }
 
 // Simple user models

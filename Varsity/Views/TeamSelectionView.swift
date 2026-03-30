@@ -5,7 +5,7 @@ struct TeamSelectionView: View {
     @EnvironmentObject var authManager: SimpleAuthManager
     @Environment(\.dismiss) private var dismiss
     
-    @State private var followedTeams: Set<UUID> = []
+    // Remove local state - use authManager.userFollows instead
     @State private var availableSchools: [School] = []
     @State private var filteredSchools: [School] = []
     @State private var searchText: String = ""
@@ -13,41 +13,65 @@ struct TeamSelectionView: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(hex: "17171B").ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        
-                        TextField("", text: $searchText, prompt: Text("Search schools...").foregroundColor(.gray.opacity(0.6)))
+        ZStack {
+            Color(hex: "17171B").ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Custom header with back button and title inline
+                HStack {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
                             .foregroundColor(.white)
-                            .onChange(of: searchText) {
-                                filterSchools()
-                            }
-                        
-                        if !searchText.isEmpty {
-                            Button(action: {
-                                searchText = ""
-                                filterSchools()
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
-                            }
+                    }
+                    
+                    Text("Manage Following")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    // Spacer to balance the back button
+                    Spacer()
+                        .frame(width: 24) // Same width as back button
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(Color(hex: "17171B"))
+                
+                // Search Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    
+                    TextField("", text: $searchText, prompt: Text("Search schools...").foregroundColor(.gray.opacity(0.6)))
+                        .foregroundColor(.white)
+                        .onChange(of: searchText) {
+                            filterSchools()
+                        }
+                    
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                            filterSchools()
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
                         }
                     }
-                    .padding()
-                    .background(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color(hex: "28282B"), lineWidth: 1)
-                    )
-                    .frame(height: 50)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
+                }
+                .padding()
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color(hex: "28282B"), lineWidth: 1)
+                )
+                .frame(height: 50)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 18)
                     
                     // Schools List
                     if isLoading {
@@ -94,7 +118,7 @@ struct TeamSelectionView: View {
                                 ForEach(filteredSchools) { school in
                                     TeamRowView(
                                         school: school,
-                                        isFollowed: followedTeams.contains(school.id),
+                                        isFollowed: authManager.isFollowingSchool(school.id),
                                         onToggle: {
                                             toggleTeamFollow(school: school)
                                         }
@@ -102,27 +126,21 @@ struct TeamSelectionView: View {
                                 }
                             }
                             .padding(.horizontal, 20)
-                            .padding(.top, 20)
+                            .padding(.top, 8)
                         }
                     }
                 }
             }
-            .navigationTitle("Manage Following")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(hex: "17171B"), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 loadTeamsAndFollowing()
             }
-        }
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") {
-                errorMessage = nil
+            .alert("Error", isPresented: .constant(errorMessage != nil)) {
+                Button("OK") {
+                    errorMessage = nil
+                }
+            } message: {
+                Text(errorMessage ?? "")
             }
-        } message: {
-            Text(errorMessage ?? "")
-        }
     }
     
     private func loadTeamsAndFollowing() {
@@ -169,10 +187,8 @@ struct TeamSelectionView: View {
     }
     
     private func loadFollowedSchools() async {
-        // Mock followed schools - first school is followed by default
-        await MainActor.run {
-            followedTeams = Set([availableSchools.first?.id].compactMap { $0 })
-        }
+        // Load actual followed schools from database
+        await authManager.loadUserFollows()
     }
     
     private func filterSchools() {
@@ -189,11 +205,12 @@ struct TeamSelectionView: View {
     }
     
     private func toggleTeamFollow(school: School) {
-        // Simple toggle for mock data
-        if followedTeams.contains(school.id) {
-            followedTeams.remove(school.id)
-        } else {
-            followedTeams.insert(school.id)
+        Task {
+            if authManager.isFollowingSchool(school.id) {
+                await authManager.unfollowSchool(school.id)
+            } else {
+                await authManager.followSchool(school.id)
+            }
         }
     }
 }
@@ -202,6 +219,7 @@ struct TeamRowView: View {
     let school: School
     let isFollowed: Bool
     let onToggle: () -> Void
+    @EnvironmentObject var authManager: SimpleAuthManager
     
     // Use the same service as Home screen
     private var logoURL: URL? {

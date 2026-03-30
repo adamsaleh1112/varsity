@@ -110,14 +110,14 @@ struct GameListCard: View {
     let gameCard: GameCardData
     
     var sportBackgroundGradient: [Color] {
-        return [Color(hex: "28282B")]
+        return [Color(hex: "28282B") ?? Color.gray]
     }
     
     var body: some View {
         ZStack {
             // Background with #28282B matching home screen
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(hex: "28282B"))
+                .fill(Color(hex: "28282B") ?? Color.gray)
             
             // Content - scores pushed closer to logos, more middle space
             HStack(spacing: 0) {
@@ -130,7 +130,7 @@ struct GameListCard: View {
                             .scaledToFit()
                     } placeholder: {
                         Circle()
-                            .fill(Color(hex: gameCard.homeTeam.primaryColor))
+                            .fill(Color(hex: gameCard.homeTeam.primaryColor) ?? Color.gray)
                             .overlay(
                                 Text(gameCard.homeTeam.abbreviation.prefix(1))
                                     .font(.caption)
@@ -205,7 +205,7 @@ struct GameListCard: View {
                             .scaledToFit()
                     } placeholder: {
                         Circle()
-                            .fill(Color(hex: gameCard.awayTeam.primaryColor))
+                            .fill(Color(hex: gameCard.awayTeam.primaryColor) ?? Color.gray)
                             .overlay(
                                 Text(gameCard.awayTeam.abbreviation.prefix(1))
                                     .font(.caption)

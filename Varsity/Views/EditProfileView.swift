@@ -298,9 +298,33 @@ struct EditProfileView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(hex: "17171B").ignoresSafeArea()
+        ZStack {
+            Color(hex: "17171B").ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Custom header with back button and title inline
+                HStack {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("Edit Profile")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    // Spacer to balance the back button
+                    Spacer()
+                        .frame(width: 24) // Same width as back button
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(Color(hex: "17171B"))
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -311,13 +335,10 @@ struct EditProfileView: View {
                         
                         Spacer(minLength: 50)
                     }
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Edit Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(hex: "17171B"), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 // Pre-populate fields with current user data
                 displayName = authManager.currentUser?.displayName ?? ""
@@ -345,13 +366,13 @@ struct EditProfileView: View {
                     }
                 }
             }
-        }
-        .alert("Error", isPresented: .constant(authManager.errorMessage != nil)) {
-            Button("OK") {
-                authManager.errorMessage = nil
+            .alert("Error", isPresented: .constant(authManager.errorMessage != nil)) {
+                Button("OK") {
+                    authManager.errorMessage = nil
+                }
+            } message: {
+                Text(authManager.errorMessage ?? "")
             }
-        } message: {
-            Text(authManager.errorMessage ?? "")
         }
     }
 }

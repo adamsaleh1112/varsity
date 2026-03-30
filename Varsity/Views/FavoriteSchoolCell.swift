@@ -8,38 +8,47 @@ struct FavoriteSchoolCell: View {
     }
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 7) {
             // School Logo
             AsyncImage(url: logoURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } placeholder: {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(hex: school.primaryColor ?? "333333"))
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: school.primaryColor ?? "333333") ?? Color.gray)
                     .overlay(
                         Text(school.shortName ?? String(school.name.prefix(2)).uppercased())
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                     )
             }
-            .frame(width: 70, height: 70)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .frame(width: 44, height: 44)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.top, 4)
             
-            // School Abbreviation
-            Text(school.shortName ?? school.name)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            
-            // State
-            Text(school.state ?? "")
-                .font(.caption)
-                .foregroundColor(.gray)
+            // School Abbreviation and State
+            HStack(spacing: 4) {
+                Text(school.shortName ?? String(school.name.prefix(3)).uppercased())
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Text(school.state ?? "")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
+            .padding(.bottom, 6)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: 80, height: 80)
+        .background(Color(hex: "18181B") ?? Color.gray)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "28282B") ?? Color.gray, lineWidth: 1)
+        )
     }
 }
 
