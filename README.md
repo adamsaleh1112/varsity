@@ -79,5 +79,5 @@ The goal is simple:
 ### `$ installation`
 
 ```bash
-git clone https://github.com/adamsaleh1112/varsity.git
+git clone https://github.com/adamsaleh1112/varsity-ios.git
 cd varsity
