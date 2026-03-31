@@ -1,4 +1,4 @@
-## Varsity
+# Varsity
 
 Varsity is a platform built to bring high school sports back to the center of student life.
 
@@ -6,7 +6,7 @@ It gives students a single place to follow their school teams, track games, stay
 
 ---
 
-### ✨ Features
+### `$ features`
 
 🏫 School-Centered Experience
 - Follow your school and its sports teams
@@ -30,7 +30,7 @@ It gives students a single place to follow their school teams, track games, stay
 
 ---
 
-### 🚀 Vision
+### `$ vision`
 
 High school sports are one of the most exciting parts of student life — but there’s no central place to follow them.
 
@@ -41,7 +41,7 @@ The goal is simple:
 
 ---
 
-### 🛠️ Tech Stack
+### `$ tech-stack`
 
 - **Frontend:** ![Swift](https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white)
 - **Backend:** ![SQL](https://img.shields.io/badge/SQL-4479A1?style=for-the-badge&logo=postgresql&logoColor=white)![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
@@ -53,7 +53,7 @@ The goal is simple:
 
 ---
 
-### 📦 Current Status
+### `$ current-status`
 
 ✅ Implemented
 - Schools, teams, and games database schema
@@ -69,31 +69,14 @@ The goal is simple:
 
 ---
 
-### 🧩 Core Data Model
-
-- **Schools**
-  - Represents each high school
-
-- **Teams**
-  - Linked to a school
-  - Represents a specific sport (e.g., Varsity Football)
-
-- **Games**
-  - `home_team_id`
-  - `away_team_id`
-  - `location` (school ID or "neutral")
-  - Stores matchups between teams
-
----
-
-### 📸 Screenshots
+### `$ screenshots`
 
 > Add screenshots here once available  
 > (Recommended: team pages, game feed, UI design)
 
 ---
 
-### ⚙️ Installation
+### `$ installation`
 
 ```bash
 git clone https://github.com/yourusername/varsity.git
