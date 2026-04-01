@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct VarsityGamesView: View {
+struct GamesView: View {
     @StateObject private var gamesViewModel = GamesViewModel()
     @State private var selectedFilter = "Past"
     let filters = ["Upcoming", "Live", "Past"]

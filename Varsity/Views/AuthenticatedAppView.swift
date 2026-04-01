@@ -26,11 +26,11 @@ struct MainAppView: View {
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
-                VarsityHomeView()
+                HomeView()
             }
             
             Tab("Games", systemImage: "sportscourt.fill") {
-                VarsityGamesView()
+                GamesView()
             }
             
             Tab("Profile", systemImage: "person.fill") {

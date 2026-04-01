@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct VarsityHomeView: View {
+struct HomeView: View {
     @StateObject private var schoolsViewModel = SchoolsViewModel()
     @StateObject private var gamesViewModel = GamesViewModel()
     @State private var selectedSchoolId: UUID? = nil
