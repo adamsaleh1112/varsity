@@ -21,6 +21,12 @@ struct EditProfileView: View {
     @State private var showingBannerPicker = false
     @State private var showingBannerDocumentPicker = false
     
+    // Image cropping states
+    @State private var showingAvatarCrop = false
+    @State private var showingBannerCrop = false
+    @State private var imageToCrop: UIImage? = nil
+    @State private var bannerToCrop: UIImage? = nil
+    
     // Helper computed property for banner view
     private var bannerView: some View {
         Group {
@@ -347,9 +353,11 @@ struct EditProfileView: View {
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task {
                     print("Photo item selected, loading data...")
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        selectedImageData = data
-                        print("Photo data loaded: \(data.count) bytes")
+                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        imageToCrop = uiImage
+                        showingAvatarCrop = true
+                        print("Photo data loaded and ready for cropping: \(data.count) bytes")
                     } else {
                         print("Failed to load photo data")
                     }
@@ -358,12 +366,40 @@ struct EditProfileView: View {
             .onChange(of: selectedBannerItem) { _, newItem in
                 Task {
                     print("Banner item selected, loading data...")
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        selectedBannerData = data
-                        print("Banner data loaded: \(data.count) bytes")
+                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        bannerToCrop = uiImage
+                        showingBannerCrop = true
+                        print("Banner data loaded and ready for cropping: \(data.count) bytes")
                     } else {
                         print("Failed to load banner data")
                     }
+                }
+            }
+            .fullScreenCover(isPresented: $showingAvatarCrop) {
+                if let imageToCrop {
+                    ImageCropView(
+                        image: imageToCrop,
+                        cropShape: .circle,
+                        onCrop: { croppedImage in
+                            if let croppedData = croppedImage.jpegData(compressionQuality: 0.9) {
+                                selectedImageData = croppedData
+                            }
+                        }
+                    )
+                }
+            }
+            .fullScreenCover(isPresented: $showingBannerCrop) {
+                if let bannerToCrop {
+                    ImageCropView(
+                        image: bannerToCrop,
+                        cropShape: .rectangle,
+                        onCrop: { croppedImage in
+                            if let croppedData = croppedImage.jpegData(compressionQuality: 0.9) {
+                                selectedBannerData = croppedData
+                            }
+                        }
+                    )
                 }
             }
             .alert("Error", isPresented: .constant(authManager.errorMessage != nil)) {
