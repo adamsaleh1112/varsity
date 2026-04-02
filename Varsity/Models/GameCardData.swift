@@ -53,4 +53,5 @@ struct TeamInfo {
     let logoURL: URL?
     let primaryColor: String
     let sport: String
+    let state: String?
 }

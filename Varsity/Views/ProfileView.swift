@@ -50,7 +50,6 @@ struct ProfileView: View {
                         
                         profilePictureSection
                         userInfoSection
-                        actionButtonsSection
                         favoritesSection
                         
                         Spacer(minLength: 100)
@@ -61,23 +60,38 @@ struct ProfileView: View {
             .background(Color(hex: "17171B"))
             .navigationTitle("")
             .overlay(
-                // Floating Settings Button
+                // Floating Action Buttons (Edit Profile & Settings)
                 VStack {
                     HStack {
                         Spacer()
+                        
+                        // Edit Profile Button
+                        Button(action: {
+                            showingEditProfile = true
+                        }) {
+                            Image(systemName: "pencil")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .frame(width: 38, height: 38)
+                                .background(Color.black.opacity(0.4))
+                                .clipShape(Circle())
+                        }
+                        .padding(.trailing, 2)
+                        
+                        // Settings Button
                         Button(action: {
                             showingSettings = true
                         }) {
                             Image(systemName: "gearshape.fill")
-                                .font(.title2)
+                                .font(.title3)
                                 .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.black.opacity(0.6))
+                                .frame(width: 38, height: 38)
+                                .background(Color.black.opacity(0.4))
                                 .clipShape(Circle())
                         }
                         .padding(.trailing, 20)
-                        .padding(.top, 20)
                     }
+                    .padding(.top, 20)
                     Spacer()
                 }
             )

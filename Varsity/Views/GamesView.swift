@@ -3,6 +3,7 @@ import SwiftUI
 struct GamesView: View {
     @StateObject private var gamesViewModel = GamesViewModel()
     @State private var selectedFilter = "Past"
+    @State private var selectedGame: GameCardData? = nil
     let filters = ["Upcoming", "Live", "Past"]
     
     var body: some View {
@@ -87,7 +88,9 @@ struct GamesView: View {
                             ScrollView(showsIndicators: false) {
                                 LazyVStack(spacing: 12) {
                                     ForEach(gamesViewModel.gameCards) { gameCard in
-                                        FullGameCard(gameCard: gameCard)
+                                        FullGameCard(gameCard: gameCard) {
+                                            selectedGame = gameCard
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, 20)
@@ -97,6 +100,9 @@ struct GamesView: View {
                     }
                 }
             }
+        }
+        .fullScreenCover(item: $selectedGame) { game in
+            GameDetailView(gameCard: game)
         }
         .onAppear {
             Task {

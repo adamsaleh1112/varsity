@@ -41,23 +41,10 @@ struct MainAppView: View {
             Tab(role: .search) {
                 NavigationStack {
                     SearchView()
-                        .searchable(text: $searchText)
                 }
             }
         }
         .accentColor(.white)
-    }
-}
-
-struct SearchView: View {
-    var body: some View {
-        ZStack {
-            Color(hex: "17171B").ignoresSafeArea()
-            
-            Text("Search")
-                .font(.largeTitle)
-                .foregroundColor(.white)
-        }
     }
 }
 

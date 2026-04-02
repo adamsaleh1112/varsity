@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FullGameCard: View {
     let gameCard: GameCardData
+    var onTap: (() -> Void)? = nil
     
     var sportBackgroundGradient: [Color] {
         return [Color(hex: "28282B") ?? Color.gray]
@@ -67,7 +68,7 @@ struct FullGameCard: View {
                     }
                     
                     // Sport Badge with more spacing from date
-                    Text(gameCard.sport)
+                    Text(gameCard.sport.uppercased())
                         .font(.system(size: 16))
                         .fontWeight(.semibold)
                         .fontWidth(.compressed)
@@ -120,6 +121,9 @@ struct FullGameCard: View {
             .padding(.horizontal, 20)
         }
         .frame(height: 128)
+        .onTapGesture {
+            onTap?()
+        }
     }
     
     private func homeTeamScoreColor(gameCard: GameCardData) -> Color {

@@ -30,7 +30,8 @@ final class GamesViewModel: ObservableObject {
                         abbreviation: homeSchool.shortName ?? String(homeSchool.name.prefix(3)).uppercased(),
                         logoURL: service.publicImageURL(bucket: "school-assets", path: homeSchool.logoPath),
                         primaryColor: homeSchool.primaryColor ?? "#333333",
-                        sport: homeTeam.sport
+                        sport: homeTeam.sport,
+                        state: homeSchool.state
                     )
                     
                     let awayTeamInfo = TeamInfo(
@@ -39,7 +40,8 @@ final class GamesViewModel: ObservableObject {
                         abbreviation: awaySchool.shortName ?? String(awaySchool.name.prefix(3)).uppercased(),
                         logoURL: service.publicImageURL(bucket: "school-assets", path: awaySchool.logoPath),
                         primaryColor: awaySchool.primaryColor ?? "#333333",
-                        sport: awayTeam.sport
+                        sport: awayTeam.sport,
+                        state: awaySchool.state
                     )
                     
                     let gameCardData = GameCardData(
@@ -50,7 +52,7 @@ final class GamesViewModel: ObservableObject {
                         startTime: game.startTime,
                         homeScore: game.homeScore,
                         awayScore: game.awayScore,
-                        sport: homeTeam.sport.uppercased(),
+                        sport: homeTeam.sport,
                         isCompleted: game.homeScore != nil && game.awayScore != nil
                     )
                     
