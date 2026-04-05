@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var schoolsViewModel = SchoolsViewModel()
     @StateObject private var gamesViewModel = GamesViewModel()
+    @EnvironmentObject var appState: AppState
     @State private var selectedSchoolId: UUID? = nil
     @State private var selectedScope = "District"
     
@@ -163,7 +164,9 @@ struct HomeView: View {
                                     .frame(width: UIScreen.main.bounds.width * 0.5 - 28, height: 140)
                             } else {
                                 ForEach(gamesViewModel.gameCards) { gameCard in
-                                    CompactGameCard(gameData: gameCard)
+                                    MiniGameCard(gameData: gameCard) {
+                                        // Navigation deferred - no action for now
+                                    }
                                 }
                             }
                         }
@@ -190,174 +193,6 @@ struct HomeView: View {
         }
     }
 }
-
-struct CompactGameCard: View {
-    let gameData: GameCardData
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Centered date header
-            HStack {
-                Spacer()
-                Text(gameData.displayDate)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                Spacer()
-            }
-            .padding(.top, 14)
-            
-            // Teams stacked vertically
-            VStack(spacing: 4) {
-                // Away team row
-                HStack(spacing: 12) {
-                    if let logoURL = gameData.awayTeam.logoURL {
-                        AsyncImage(url: logoURL) { image in
-                            image
-                                .resizable()
-                                .scaledToFit()
-                        } placeholder: {
-                            Circle()
-                                .fill(Color(hex: gameData.awayTeam.primaryColor))
-                                .overlay(
-                                    Text(gameData.awayTeam.abbreviation.prefix(1))
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                )
-                        }
-                        .frame(width: 24, height: 24)
-                        .clipShape(Circle())
-                    } else {
-                        Circle()
-                            .fill(Color(hex: gameData.awayTeam.primaryColor))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Text(gameData.awayTeam.abbreviation.prefix(1))
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            )
-                    }
-                    
-                    Text(gameData.awayTeam.abbreviation)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text(gameData.awayScore != nil ? "\(gameData.awayScore!)" : "-")
-                        .font(.title)
-                        .fontWeight(.heavy)
-                        .fontWidth(.compressed)
-                        .foregroundColor(awayTeamScoreColor(gameData: gameData))
-                }
-                
-                // Home team row
-                HStack(spacing: 12) {
-                    if let logoURL = gameData.homeTeam.logoURL {
-                        AsyncImage(url: logoURL) { image in
-                            image
-                                .resizable()
-                                .scaledToFit()
-                        } placeholder: {
-                            Circle()
-                                .fill(Color(hex: gameData.homeTeam.primaryColor))
-                                .overlay(
-                                    Text(gameData.homeTeam.abbreviation.prefix(1))
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                )
-                        }
-                        .frame(width: 24, height: 24)
-                        .clipShape(Circle())
-                    } else {
-                        Circle()
-                            .fill(Color(hex: gameData.homeTeam.primaryColor))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Text(gameData.homeTeam.abbreviation.prefix(1))
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            )
-                    }
-                    
-                    Text(gameData.homeTeam.abbreviation)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text(gameData.homeScore != nil ? "\(gameData.homeScore!)" : "-")
-                        .font(.title)
-                        .fontWeight(.heavy)
-                        .fontWidth(.compressed)
-                        .foregroundColor(homeTeamScoreColor(gameData: gameData))
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            
-            // Sport tag
-            HStack {
-                Spacer()
-                Text(gameData.sport)
-                    .font(.system(size: 16))
-                    .fontWeight(.semibold)
-                    .fontWidth(.compressed)
-                    .foregroundColor(Color(hex: "17171B"))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                    .background(Color.white)
-                    .clipShape(Capsule())
-                Spacer()
-            }
-            .padding(.bottom, 16)
-        }
-        .background(Color(hex: "28282B"))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .frame(width: UIScreen.main.bounds.width * 0.5 - 28) // 50% screen width minus padding
-        .frame(height: 164)
-    }
-    
-    private func homeTeamScoreColor(gameData: GameCardData) -> Color {
-        // If game is not completed, show white
-        guard gameData.isCompleted,
-              let homeScore = gameData.homeScore,
-              let awayScore = gameData.awayScore else {
-            return .white
-        }
-        
-        // If home team lost, grey out the score
-        if homeScore < awayScore {
-            return .gray
-        }
-        
-        // If home team won or tied, keep white
-        return .white
-    }
-    
-    private func awayTeamScoreColor(gameData: GameCardData) -> Color {
-        // If game is not completed, show white
-        guard gameData.isCompleted,
-              let homeScore = gameData.homeScore,
-              let awayScore = gameData.awayScore else {
-            return .white
-        }
-        
-        // If away team lost, grey out the score
-        if awayScore < homeScore {
-            return .gray
-        }
-        
-        // If away team won or tied, keep white
-        return .white
-    }
-}
-
 
 struct NoEffectButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

@@ -13,37 +13,27 @@ struct ProfileView: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Banner at top - extends to very top of screen with scaling effect
-                        GeometryReader { bannerGeometry in
-                            let minY = bannerGeometry.frame(in: .global).minY
-                            // Only scale when pulling down from top (overscroll)
-                            let isAtTop = minY > 0
-                            let overscroll = isAtTop ? minY : 0
-                            let scale = 1 + (overscroll / 200)
-                            
-                            ZStack(alignment: .top) {
-                                if let bannerUrl = authManager.currentUser?.bannerUrl,
-                                   !bannerUrl.isEmpty {
-                                    // Add cache-busting timestamp to force reload
-                                    let cacheBustedUrl = "\(bannerUrl)?t=\(bannerRefreshToken)"
-                                    AsyncImage(url: URL(string: cacheBustedUrl)) { image in
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        Rectangle()
-                                            .fill(Color.gray.opacity(0.3))
-                                    }
-                                    .frame(height: 200)
-                                    .scaleEffect(scale, anchor: .bottom)
-                                } else {
+                        // Banner at top - fixed height, no stretch
+                        ZStack(alignment: .top) {
+                            if let bannerUrl = authManager.currentUser?.bannerUrl,
+                               !bannerUrl.isEmpty {
+                                // Add cache-busting timestamp to force reload
+                                let cacheBustedUrl = "\(bannerUrl)?t=\(bannerRefreshToken)"
+                                AsyncImage(url: URL(string: cacheBustedUrl)) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
                                     Rectangle()
-                                        .fill(Color(hex: "28282B"))
-                                        .frame(height: 200)
-                                        .scaleEffect(scale, anchor: .bottom)
+                                        .fill(Color.gray.opacity(0.3))
                                 }
+                                .frame(height: 200)
+                                .clipped()
+                            } else {
+                                Rectangle()
+                                    .fill(Color(hex: "28282B"))
+                                    .frame(height: 200)
                             }
-                            .frame(height: 200)
                         }
                         .frame(height: 200)
                         .padding(.top, -geometry.safeAreaInsets.top)
@@ -228,7 +218,7 @@ struct ProfileView: View {
                     .font(.subheadline)
                     .padding(.top, 20)
             } else {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 20) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16) {
                     ForEach(authManager.userFollows) { follow in
                         if let school = follow.school {
                             FavoriteSchoolCell(school: school)

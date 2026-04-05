@@ -55,10 +55,12 @@ struct EditProfileView: View {
                             .fill(Color(hex: "28282B"))
                     }
                 }
-                .frame(height: 140)
+                .frame(height: 170)
                 .frame(maxWidth: .infinity)
+                .clipped()
             }
             .buttonStyle(PlainButtonStyle())
+            .padding(.top, 30)
 
             // Centered profile picture overlapping banner with half hanging off
             Button(action: {

@@ -42,18 +42,12 @@ struct GameDetailView: View {
                                     image
                                         .resizable()
                                         .scaledToFit()
+                                        .frame(width: 80, height: 80)
                                 } placeholder: {
                                     Circle()
                                         .fill(Color(hex: gameCard.homeTeam.primaryColor) ?? Color.gray)
-                                        .overlay(
-                                            Text(gameCard.homeTeam.abbreviation.prefix(1))
-                                                .font(.system(size: 28))
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.white)
-                                        )
+                                        .frame(width: 80, height: 80)
                                 }
-                                .frame(width: 80, height: 80)
-                                .clipShape(Circle())
                                 
                                 // Abbreviation with state greyed out
                                 HStack(spacing: 4) {
@@ -120,18 +114,12 @@ struct GameDetailView: View {
                                     image
                                         .resizable()
                                         .scaledToFit()
+                                        .frame(width: 80, height: 80)
                                 } placeholder: {
                                     Circle()
                                         .fill(Color(hex: gameCard.awayTeam.primaryColor) ?? Color.gray)
-                                        .overlay(
-                                            Text(gameCard.awayTeam.abbreviation.prefix(1))
-                                                .font(.system(size: 28))
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.white)
-                                        )
+                                        .frame(width: 80, height: 80)
                                 }
-                                .frame(width: 80, height: 80)
-                                .clipShape(Circle())
                                 
                                 // Abbreviation with state greyed out
                                 HStack(spacing: 4) {

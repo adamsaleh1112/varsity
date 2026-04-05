@@ -1,6 +1,6 @@
 import Foundation
 
-struct GameCardData: Identifiable {
+struct GameCardData: Identifiable, Equatable {
     let id: UUID
     let homeTeam: TeamInfo
     let awayTeam: TeamInfo
@@ -46,7 +46,7 @@ struct GameCardData: Identifiable {
     }
 }
 
-struct TeamInfo {
+struct TeamInfo: Equatable {
     let id: UUID
     let name: String
     let abbreviation: String

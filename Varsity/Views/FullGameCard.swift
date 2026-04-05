@@ -23,18 +23,12 @@ struct FullGameCard: View {
                         image
                             .resizable()
                             .scaledToFit()
+                            .frame(width: 48, height: 48)
                     } placeholder: {
                         Circle()
                             .fill(Color(hex: gameCard.homeTeam.primaryColor) ?? Color.gray)
-                            .overlay(
-                                Text(gameCard.homeTeam.abbreviation.prefix(1))
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            )
+                            .frame(width: 48, height: 48)
                     }
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
                     
                     Text(gameCard.homeTeam.abbreviation)
                         .font(.headline)
@@ -98,18 +92,12 @@ struct FullGameCard: View {
                         image
                             .resizable()
                             .scaledToFit()
+                            .frame(width: 48, height: 48)
                     } placeholder: {
                         Circle()
                             .fill(Color(hex: gameCard.awayTeam.primaryColor) ?? Color.gray)
-                            .overlay(
-                                Text(gameCard.awayTeam.abbreviation.prefix(1))
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            )
+                            .frame(width: 48, height: 48)
                     }
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
                     
                     Text(gameCard.awayTeam.abbreviation)
                         .font(.headline)

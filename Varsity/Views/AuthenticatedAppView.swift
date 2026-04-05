@@ -21,18 +21,18 @@ struct AuthenticatedAppView: View {
 
 struct MainAppView: View {
     @EnvironmentObject var authManager: SimpleAuthManager
-    @State private var searchText = ""
+    @StateObject private var appState = AppState()
     
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
                 HomeView()
             }
-            
+                
             Tab("Games", systemImage: "sportscourt.fill") {
                 GamesView()
             }
-            
+        
             Tab("Profile", systemImage: "person.fill") {
                 ProfileView()
             }
@@ -45,6 +45,7 @@ struct MainAppView: View {
             }
         }
         .accentColor(.white)
+        .environmentObject(appState)
     }
 }
 
